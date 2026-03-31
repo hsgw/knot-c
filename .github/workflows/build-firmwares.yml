@@ -1,0 +1,86 @@
+name: Build and Release knot-c
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout vial-qmk (Sparse)
+        uses: actions/checkout@v6
+        with:
+          repository: hsgw/vial-qmk
+          ref: dm9records/knot_c
+          path: qmk_firmware
+          fetch-depth: 1
+          sparse-checkout: |
+            /*
+            !/keyboards/
+            /keyboards/dm9records/knot_c/
+          sparse-checkout-cone-mode: false
+
+      - name: Update all submodules
+        run: |
+          cd qmk_firmware
+          git submodule update --init --recursive
+
+      - name: Build Firmware (Default)
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/qmk_firmware:/qmk_firmware \
+            -w /qmk_firmware \
+            qmkfm/qmk_cli \
+            /bin/bash -c "qmk compile -kb dm9records/knot_c -km default -e SKIP_GIT=true"
+          # 新しく生成された .uf2 ファイルをリネーム
+          find qmk_firmware -maxdepth 1 -name "*.uf2" ! -name "knot_c-*.uf2" -exec mv {} qmk_firmware/knot_c-default.uf2 \;
+
+      - name: Build Firmware (Vial)
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/qmk_firmware:/qmk_firmware \
+            -w /qmk_firmware \
+            qmkfm/qmk_cli \
+            /bin/bash -c "qmk compile -kb dm9records/knot_c -km vial -e SKIP_GIT=true"
+          find qmk_firmware -maxdepth 1 -name "*.uf2" ! -name "knot_c-*.uf2" -exec mv {} qmk_firmware/knot_c-vial.uf2 \;
+
+      - name: Build Firmware (Vial + smooth scroll)
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/qmk_firmware:/qmk_firmware \
+            -w /qmk_firmware \
+            qmkfm/qmk_cli \
+            /bin/bash -c "qmk compile -kb dm9records/knot_c -km vial -e SKIP_GIT=true -e 'CDEFS += -DPOINTING_DEVICE_HIRES_SCROLL_ENABLE'"
+          find qmk_firmware -maxdepth 1 -name "*.uf2" ! -name "knot_c-*.uf2" -exec mv {} qmk_firmware/knot_c-vial-smooth_scroll.uf2 \;
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: qmk_firmware/*.uf2
+
+  release:
+    # 全てのMatrixジョブが終わってから実行
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: firmware-dist
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: firmware-dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
