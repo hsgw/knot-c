@@ -10,9 +10,12 @@
 
 ## ファームウェア
 
-[Release](https://github.com/hsgw/knot-c/releases/)にて配布しています。
+[Release](https://github.com/hsgw/knot-c/releases/)にてビルド済みのファームウェアを配布しています。
 
 書き込み方法などは https://5z6p.com/products/knot-c/ を参考にしてください。
+
+ファームウェアのソースコードはこちらです。  
+https://github.com/hsgw/vial-qmk/tree/dm9records/knot_c/keyboards/dm9records/knot_c
 
 - knot_c-default.uf2
   - 通常のキーマップ
@@ -21,14 +24,20 @@
 
 smooth scroll対応版もあります。
 
-### 設定
+## 設定
 
-vial対応のファームウェアではトラックボールの感度などを以下のwebアプリで設定できます。
+vial対応のファームウェアではトラックボールの感度などを以下のwebアプリで設定できます。  
 chromeのみで動作します。
+
+https://hsgw.github.io/knot-c_config_tool/
 
 キーマップに関しては通常のvialを利用してください。
 
+https://vial.rocks
+
 ## 3Dプリント用ファイル
+
+**準備中です**
 
 基板以外の部分は3Dプリントで制作しています。  
 破損した場合や色を変更したい、自分用にカスタマイズしたい場合にご利用ください。
